@@ -40,6 +40,20 @@ r#"    </table>
   </body>
 </html>
 "#;
+static GAG_TYPES: [&'static str; 4] =
+    ["sound", "throw", "squirt", "drop"];
+static GAG_NAMES: [[&'static str; 8]; 4] = [
+    ["pass", "bikehorn",         "whistle",         "bugle",           "aoogah",         "elephant_trunk", "foghorn",     "opera_singer"],
+    ["pass", "cupcake",          "fruit_pie_slice", "cream_pie_slice", "fruit_pie",      "cream_pie",      "cake",        "wedding_cake"],
+    ["pass", "squirting_flower", "glass_of_water",  "squirtgun",       "seltzer_bottle", "fire_hose",      "storm_cloud", "geyser"      ],
+    ["pass", "flowerpot",        "sandbag",         "anvil",           "big_weight",     "safe",           "grand_piano", "toontanic"   ],
+];
+static GAG_NAMES_DISPLAY: [[&'static str; 8]; 4] = [
+    ["Pass", "Bikehorn",         "Whistle",         "Bugle",           "Aoogah",         "Elephant Trunk", "Foghorn",     "Opera Singer"],
+    ["Pass", "Cupcake",          "Fruit Pie Slice", "Cream Pie Slice", "Fruit Pie",      "Cream Pie",      "Cake",        "Wedding Cake"],
+    ["Pass", "Squirting Flower", "Glass of Water",  "Squirtgun",       "Seltzer Bottle", "Fire Hose",      "Storm Cloud", "Geyser"      ],
+    ["Pass", "Flowerpot",        "Sandbag",         "Anvil",           "Big Weight",     "Safe",           "Grand Piano", "Toontanic"   ],
+];
 
 
 #[derive(Debug, Fail)]
@@ -56,7 +70,7 @@ pub enum ParseError {
     TomlError {
         toml_err: &'static str,
     },
-    #[fail(display = "TOML key error: got {}, expected {}", key, expected)]
+    #[fail(display = "TOML key error: expected {}, got: {}", expected, key)]
     KeyError {
         key:      String,
         expected: &'static str,
@@ -64,6 +78,17 @@ pub enum ParseError {
     #[fail(display = "Missing TOML key: {}", key)]
     MissingKey {
         key: &'static str,
+    },
+    #[fail(display = "TOML array index out of bounds: {}", ix)]
+    IxOutOfBounds {
+        ix: usize,
+    },
+    #[fail(display = "TOML entity has wrong type: expected {}, got: {}",
+                         expected,
+                         got)]
+    WrongType {
+        got:      &'static str,
+        expected: &'static str,
     },
 }
 
@@ -101,33 +126,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
         let v2 = lv_caps.get(2).is_some();
         lvs.insert((v2, level), lv_data);
     }
-    for ((v2, level), lv_data) in lvs {
-        let nonlured_data =
-            lv_data.get("nonlured").ok_or(ParseError::MissingKey {
-                key: "nonlured",
-            })?;
-        let lured_data =
-            lv_data.get("lured").ok_or(ParseError::MissingKey {
-                key: "lured",
-            })?;
-
-        let nonlured_nonorg_data =
-            nonlured_data.get("nonorg").ok_or(ParseError::MissingKey {
-                key: "nonorg",
-            })?;
-        let nonlured_org_data =
-            nonlured_data.get("org").ok_or(ParseError::MissingKey {
-                key: "org",
-            })?;
-        let lured_nonorg_data =
-            lured_data.get("nonorg").ok_or(ParseError::MissingKey {
-                key: "nonorg",
-            })?;
-        let lured_org_data =
-            lured_data.get("org").ok_or(ParseError::MissingKey {
-                key: "org",
-            })?;
-
+    for (&(v2, level), _) in &lvs {
         let level_string =
             format!("{}{}", level, if v2 { " v2.0" } else { "" });
 
@@ -142,7 +141,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
     html_str.push_str(r#"      </tr>
 "#);
 
-    for toon_count in 1..=4u8 {
+    for toon_count in 1..=4 {
         for &org in &[false, true] {
             html_str.push_str(r#"      <tr>
         <td class="col-header">"#);
@@ -153,6 +152,85 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
                     if org { "with" } else { "no" }));
             html_str.push_str(r#" organic)</td>
 "#);
+
+            for (&(v2, level), lv_data) in &lvs {
+                let nonlured_data =
+                    lv_data.get("nonlured").ok_or(ParseError::MissingKey {
+                        key: "nonlured",
+                    })?;
+                let lured_data =
+                    lv_data.get("lured").ok_or(ParseError::MissingKey {
+                        key: "lured",
+                    })?;
+
+                let (nonlured, lured) = if org {
+                    let nonlured_org_data =
+                        nonlured_data.get("org").ok_or(ParseError::MissingKey {
+                            key: "org",
+                        })?;
+                    let lured_org_data =
+                        lured_data.get("org").ok_or(ParseError::MissingKey {
+                            key: "org",
+                        })?;
+
+                    (nonlured_org_data, lured_org_data)
+                } else {
+                    let nonlured_nonorg_data =
+                        nonlured_data.get("nonorg")
+                                     .ok_or(ParseError::MissingKey {
+                            key: "nonorg",
+                        })?;
+                    let lured_nonorg_data =
+                        lured_data.get("nonorg").ok_or(ParseError::MissingKey {
+                            key: "nonorg",
+                        })?;
+
+                    (nonlured_nonorg_data, lured_nonorg_data)
+                };
+
+                for &gag_data in &[nonlured, lured] {
+                    html_str.push_str(r#"        <td><table>
+"#);
+                    for gag_type_ix in 0..GAG_TYPES.len() {
+                        let gag_type = GAG_TYPES[gag_type_ix];
+                        let typed_data =
+                            gag_data.get(gag_type)
+                                    .ok_or(ParseError::MissingKey {
+                                key: gag_type,
+                            })?.get(toon_count - 1)
+                               .ok_or(ParseError::IxOutOfBounds {
+                                ix: toon_count - 1,
+                            })?.as_array().ok_or(ParseError::WrongType {
+                                got:      "?",
+                                expected: "array",
+                            })?.iter().map(|v|
+                                v.as_integer().ok_or(ParseError::WrongType {
+                                    got:      v.type_str(),
+                                    expected: "integer",
+                                }));
+
+                        html_str.push_str(r#"          <tr>"#);
+                        for gag_ix in typed_data {
+                            let gag_ix = gag_ix? as usize;
+                            let gag_name = GAG_NAMES[gag_type_ix][gag_ix];
+                            let gag_name_display =
+                                GAG_NAMES_DISPLAY[gag_type_ix][gag_ix];
+
+                            html_str.push_str(r#"<td><img src="img/"#);
+                            html_str.push_str(gag_name);
+                            html_str.push_str(r#".png" alt=""#);
+                            html_str.push_str(gag_name_display);
+                            html_str.push_str(r#"" title=""#);
+                            html_str.push_str(gag_name_display);
+                            html_str.push_str(r#""></td>"#);
+                        }
+                        html_str.push_str(r#"</tr>
+"#);
+                    }
+                    html_str.push_str(r#"        </table></td>
+"#);
+                }
+            }
 
             html_str.push_str(r#"      </tr>
 "#);

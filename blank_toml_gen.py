@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-GAGS = ["throw", "squirt", "drop", "sound"]
+GAGS = ["sound", "throw", "squirt", "drop"]
 
 s = ""
 for lvl in range(1, 17):
