@@ -6,6 +6,8 @@ authors = ["Jon Doe <agustusfifth@gmail.com>"]
 [dependencies]
 failure = "*"
 failure_derive = "*"
+lazy_static = "*"
+regex = "*"
 toml = "*"
 
 [profile.release]

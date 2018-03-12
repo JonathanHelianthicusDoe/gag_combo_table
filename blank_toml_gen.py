@@ -39,5 +39,5 @@ for lvl in range(1, 17):
                 s += str([[0] * tooncount for tooncount in range(1, 5)])
                 s += "\n"
 
-with open("combos.toml", "w", encoding="utf8") as f:
+with open("combos.blank.toml", "w", encoding="utf8") as f:
     f.write(s)
