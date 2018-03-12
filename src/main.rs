@@ -26,17 +26,19 @@ r#"<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Gaffs</title>
+    <link rel="stylesheet" href="css/style.css" type="text/css" />
   </head>
   <body>
     <table>
       <colgroup>
         <col span="1" style="background-color: #ccc;">
       </colgroup>
+      <thead>
       <tr>
-        <th></th>
 "#;
 static HTML_TAIL: &'static str =
-r#"    </table>
+r#"      </tbody>
+    </table>
   </body>
 </html>
 "#;
@@ -109,7 +111,8 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
             Regex::new(r"^level_([1-9]\d?)(_v2)?$").unwrap();
     }
 
-    let mut html_str = HTML_HEAD.to_string();
+    let mut html_str = String::with_capacity(262_144);
+    html_str.push_str(HTML_HEAD);
 
     let main_table = toml_val.as_table().ok_or(ParseError::TomlError {
         toml_err: "top-level value is not a Table",
@@ -126,19 +129,32 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
         let v2 = lv_caps.get(2).is_some();
         lvs.insert((v2, level), lv_data);
     }
+
+    let mut head_foot_str = String::with_capacity(1_280);
+    head_foot_str.push_str(r#"        <th></th>
+"#);
     for (&(v2, level), _) in &lvs {
         let level_string =
             format!("{}{}", level, if v2 { " v2.0" } else { "" });
 
-        html_str.push_str(r#"        <th>Level "#);
-        html_str.push_str(&level_string);
-        html_str.push_str(r#" (not lured)</th>
+        head_foot_str.push_str(r#"        <th>Level "#);
+        head_foot_str.push_str(&level_string);
+        head_foot_str.push_str(r#" (not lured)</th>
         <th>Level "#);
-        html_str.push_str(&level_string);
-        html_str.push_str(r#" (lured)</th>
+        head_foot_str.push_str(&level_string);
+        head_foot_str.push_str(r#" (lured)</th>
 "#);
     }
+    html_str.push_str(&head_foot_str);
     html_str.push_str(r#"      </tr>
+      </thead>
+      <tfoot>
+      <tr>
+"#);
+    html_str.push_str(&head_foot_str);
+    html_str.push_str(r#"      </tr>
+      </tfoot>
+      <tbody>
 "#);
 
     for toon_count in 1..=4 {
@@ -153,7 +169,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
             html_str.push_str(r#" organic)</td>
 "#);
 
-            for (&(v2, level), lv_data) in &lvs {
+            for (_, lv_data) in &lvs {
                 let nonlured_data =
                     lv_data.get("nonlured").ok_or(ParseError::MissingKey {
                         key: "nonlured",
@@ -209,19 +225,38 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
                                     expected: "integer",
                                 }));
 
-                        html_str.push_str(r#"          <tr>"#);
+                        html_str.push_str(r#"          <tr class=""#);
+                        html_str.push_str(gag_type);
+                        html_str.push_str(r#"">"#);
                         for gag_ix in typed_data {
-                            let gag_ix = gag_ix? as usize;
+                            let gag_ix = gag_ix?;
+                            let (gag_ix, org_gag) = if gag_ix < 0 {
+                                ((-gag_ix) as usize, true)
+                            } else {
+                                (gag_ix as usize, false)
+                            };
                             let gag_name = GAG_NAMES[gag_type_ix][gag_ix];
                             let gag_name_display =
                                 GAG_NAMES_DISPLAY[gag_type_ix][gag_ix];
 
                             html_str.push_str(r#"<td><img src="img/"#);
                             html_str.push_str(gag_name);
+                            if org_gag {
+                                html_str.push_str("_org");
+                            }
                             html_str.push_str(r#".png" alt=""#);
+                            if org_gag {
+                                html_str.push_str("Organic ");
+                            }
                             html_str.push_str(gag_name_display);
                             html_str.push_str(r#"" title=""#);
+                            if org_gag {
+                                html_str.push_str("Organic ");
+                            }
                             html_str.push_str(gag_name_display);
+                            if org_gag {
+                                html_str.push_str(r#"" class="org"#);
+                            }
                             html_str.push_str(r#""></td>"#);
                         }
                         html_str.push_str(r#"</tr>
