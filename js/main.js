@@ -7,6 +7,7 @@ const OR_CHOICE = Object.freeze({
     BOTH: 2,
 });
 
+
 function apply_filters(filters) {
     const min_cog_lv = filters.level_range[0];
     const max_cog_lv = filters.level_range[1];
