@@ -25,10 +25,76 @@ r#"<!DOCTYPE html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Gaffs</title>
+    <title>Gag combos</title>
     <link rel="stylesheet" href="css/style.css" type="text/css" />
+    <script type="text/javascript" src="js/main.js" defer></script>
   </head>
   <body>
+    <div id="controls-container">
+      <div id="cog-level-range-select">
+        <label>
+          Minimum cog level
+          <input id="level-range-low" type="number" min="1" max="12" value="1">
+        </label>
+        <label>
+          Maximum cog level
+          <input id="level-range-high" type="number" min="1" max="12" value="12">
+        </label>
+      </div>
+      <div id="lured-select">
+        <label>
+          Lured &amp; unlured
+          <input id="lured-both" type="radio" name="lured-radio" value="on">
+        </label>
+        <label>
+          Lured only
+          <input id="lured-yes" type="radio" name="lured-radio">
+        </label>
+        <label>
+          Unlured only
+          <input id="lured-no" type="radio" name="lured-radio">
+        </label>
+      </div>
+      <div id="v2-select">
+        <label>
+          v2.0 &amp; non-v2.0
+          <input id="v2-both" type="radio" name="v2-radio" value="on">
+        </label>
+        <label>
+          v2.0 only
+          <input id="v2-yes" type="radio" name="v2-radio">
+        </label>
+        <label>
+          Non-v2.0 only
+          <input id="v2-no" type="radio" name="v2-radio">
+        </label>
+      </div>
+      <div id="toons-range-select">
+        <label>
+          Minimum number of toons
+          <input id="toons-low" type="number" min="1" max="4" value="1">
+        </label>
+        <label>
+          Maximum number of toons
+          <input id="toons-high" type="number" min="1" max="4" value="4">
+        </label>
+      </div>
+      <div id="org-select">
+        <label>
+          Organic &amp; non-organic
+          <input id="org-both" type="radio" name="org-radio" value="on">
+        </label>
+        <label>
+          Organic only
+          <input id="org-yes" type="radio" name="org-radio">
+        </label>
+        <label>
+          Non-organic only
+          <input id="org-no" type="radio" name="org-radio">
+        </label>
+      </div>
+    </div>
+
     <table id="main-table">
       <colgroup>
         <col span="1" style="background-color: #cecece;">
@@ -136,11 +202,17 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
     for (&(v2, level), _) in &lvs {
         let level_string =
             format!("{}{}", level, if v2 { " v2.0" } else { "" });
+        let class_string =
+            format!("level-{} {}v2", level, if v2 { "" } else { "not-" });
 
-        head_foot_str.push_str(r#"        <th>Level "#);
+        head_foot_str.push_str(r#"        <th class=""#);
+        head_foot_str.push_str(&class_string);
+        head_foot_str.push_str(r#" not-lured">Level "#);
         head_foot_str.push_str(&level_string);
         head_foot_str.push_str(r#" (not lured)</th>
-        <th>Level "#);
+        <th class=""#);
+        head_foot_str.push_str(&class_string);
+        head_foot_str.push_str(r#" lured">Level "#);
         head_foot_str.push_str(&level_string);
         head_foot_str.push_str(r#" (lured)</th>
 "#);
@@ -159,7 +231,12 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
 
     for toon_count in 1..=4 {
         for &org in &[false, true] {
-            html_str.push_str(r#"      <tr>
+            html_str.push_str(r#"      <tr class=""#);
+            html_str.push_str(
+                &format!("{}-toons {}org-row",
+                    toon_count,
+                    if org { "" } else { "not-" }));
+            html_str.push_str(r#"">
         <td class="col-header">"#);
             html_str.push_str(
                 &format!(r#"{} toon{} ({}"#,
@@ -169,7 +246,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
             html_str.push_str(r#" organic)</td>
 "#);
 
-            for (_, lv_data) in &lvs {
+            for (&(v2, level), lv_data) in &lvs {
                 let nonlured_data =
                     lv_data.get("nonlured").ok_or(ParseError::MissingKey {
                         key: "nonlured",
@@ -204,8 +281,16 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
                     (nonlured_nonorg_data, lured_nonorg_data)
                 };
 
-                for &gag_data in &[nonlured, lured] {
-                    html_str.push_str(r#"        <td><table class="gag-row">
+                for (i, &gag_data) in [nonlured, lured].iter().enumerate() {
+                    let is_lured = i == 1;
+
+                    html_str.push_str(r#"        <td class=""#);
+                    html_str.push_str(
+                        &format!("level-{} {}lured {}v2",
+                            level,
+                            if is_lured { "" } else { "not-" },
+                            if v2 { "" } else { "not-" }));
+                    html_str.push_str(r#""><table class="gag-row">
 "#);
                     for gag_type_ix in 0..GAG_TYPES.len() {
                         let gag_type = GAG_TYPES[gag_type_ix];
