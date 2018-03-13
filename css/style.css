@@ -78,11 +78,20 @@ td img:hover {
 */
 }
 
+.gag-row {
+    table-layout: fixed;
+}
+
 .img-td {
     background-clip: padding-box;
     border-collapse: separate;
     border-radius: 12px;
     border: 1px solid rgba(0, 0, 0, 0.75);
+
+    width: 48px;
+    max-width: 48px;
+    height: 48px;
+    max-height: 48px;
 }
 
 .sound > td {

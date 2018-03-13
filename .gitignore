@@ -4,5 +4,5 @@
 Cargo.lock
 
 # Output
-*.html
+test.html
 img/.batch

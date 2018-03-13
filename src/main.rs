@@ -202,7 +202,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
                 };
 
                 for &gag_data in &[nonlured, lured] {
-                    html_str.push_str(r#"        <td><table>
+                    html_str.push_str(r#"        <td><table class="gag-row">
 "#);
                     for gag_type_ix in 0..GAG_TYPES.len() {
                         let gag_type = GAG_TYPES[gag_type_ix];
