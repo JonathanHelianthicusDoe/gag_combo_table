@@ -30,6 +30,9 @@ r#"<!DOCTYPE html>
   </head>
   <body>
     <table id="main-table">
+      <colgroup>
+        <col span="1" style="background-color: #cecece;">
+      </colgroup>
       <thead>
       <tr>
 "#;
