@@ -1,10 +1,55 @@
+:root {
+    --main-bg-color: #ffffff;
+}
+
 * {
     margin: 0;
     padding: 0;
 }
 
+#main-table {
+    border-collapse: collapse;
+}
+
 td {
     vertical-align: middle;
+    padding: 3px;
+}
+
+td:not(.img-td) {
+    border: 2px groove #000000;
+}
+
+th:not(.empty-cell) {
+    border: 2px groove #000000;
+}
+
+thead > tr:not(.empty-cell) {
+    background-color: #cecece;
+}
+
+tfoot > tr:not(.empty-cell) {
+    background-color: #cecece;
+}
+
+#main-table > tbody > tr:nth-child(even) {
+    background-color: rgba(255, 223, 108, 0.5);
+}
+
+#main-table > tbody > tr > td:nth-child(odd):not(.col-header) {
+    background-color: rgba(123, 255, 140, 0.375);
+}
+
+#main-table > thead > tr > th:nth-child(odd):not(.empty-cell) {
+    background-color: rgba(123, 255, 140, 0.375);
+}
+
+#main-table > tfoot > tr > th:nth-child(odd):not(.empty-cell) {
+    background-color: rgba(123, 255, 140, 0.375);
+}
+
+.empty-cell {
+    background-color: var(--main-bg-color);
 }
 
 th, .col-header {
@@ -16,24 +61,68 @@ td img {
     display: block;
     margin-right: auto;
     margin-left: auto;
+/*
+    animation-duration: 0.25s;
+    animation-name: hoverover;
+    animation-timing-function: ease-out;
+*/
 }
 
-.sound {
+td img:hover {
+/*
+    animation-duration: 0.25s;
+    animation-name: hoverout;
+    animation-timing-function: ease-out;
+
+    transform: translateY(-8px);
+*/
+}
+
+.img-td {
+    background-clip: padding-box;
+    border-collapse: separate;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.75);
+}
+
+.sound > td {
     background-color: #3d5deb;
 }
 
-.throw {
+.throw > td {
     background-color: #ed9f32;
 }
 
-.squirt {
+.squirt > td {
     background-color: #f55bd6;
 }
 
-.drop {
+.drop > td {
     background-color: #32eaed;
 }
 
 .org {
     filter: contrast(150%) brightness(150%);
 }
+
+/*
+@keyframes hoverout {
+    from {
+        transform: translateY(0px);
+    }
+
+    to {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes hoverover {
+    from {
+        transform: translateY(-8px);
+    }
+
+    to {
+        transform: translateY(0px);
+    }
+}
+*/

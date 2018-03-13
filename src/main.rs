@@ -29,10 +29,7 @@ r#"<!DOCTYPE html>
     <link rel="stylesheet" href="css/style.css" type="text/css" />
   </head>
   <body>
-    <table>
-      <colgroup>
-        <col span="1" style="background-color: #ccc;">
-      </colgroup>
+    <table id="main-table">
       <thead>
       <tr>
 "#;
@@ -131,7 +128,7 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
     }
 
     let mut head_foot_str = String::with_capacity(1_280);
-    head_foot_str.push_str(r#"        <th></th>
+    head_foot_str.push_str(r#"        <th class="empty-cell"></th>
 "#);
     for (&(v2, level), _) in &lvs {
         let level_string =
@@ -239,7 +236,8 @@ fn generate_html(toml_val: Value) -> Result<String, Error> {
                             let gag_name_display =
                                 GAG_NAMES_DISPLAY[gag_type_ix][gag_ix];
 
-                            html_str.push_str(r#"<td><img src="img/"#);
+                            html_str.push_str(
+                                r#"<td class="img-td"><img src="img/"#);
                             html_str.push_str(gag_name);
                             if org_gag {
                                 html_str.push_str("_org");
